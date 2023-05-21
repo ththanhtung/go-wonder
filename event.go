@@ -12,3 +12,15 @@ func DecodeEvent(rawEvent []byte) *Event {
 	json.Unmarshal(rawEvent, &decodedEvent)
 	return &decodedEvent
 }
+
+type BoardCastGameStateEvent struct {
+	EventType string `json:"type"`
+	Desc      string `json:"desc"`
+	Revealed  string `json:"revealed"`
+}
+
+type WinningEvent struct {
+	EventType string `json:"type"`
+	Winner    string `json:"winner"`
+	Score     int    `json:"score"`
+}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
@@ -59,6 +60,16 @@ func (c *Controller) GameLoop() {
 			if players[i].MakeTurn() {
 				c.ProcessInput(players[i], players)
 				c.networkManager.BoardcastGameState(c.state)
+				if c.state.wonderWordGame.CheckIfWinning() {
+					winner := WinningEvent{
+						EventType: "win",
+						Winner:    players[i].username,
+						Score:     players[i].score,
+					}
+					WinningEventJson, _ := json.Marshal(winner)
+					c.networkManager.broadcast <- []byte(WinningEventJson)
+					c.state.wonderWordGame.Start()
+				}
 				i++
 			} else {
 				c.networkManager.BoardcastGameState(c.state)
@@ -87,12 +98,4 @@ func (c *Controller) ProcessInput(p *Player, players []*Player) {
 			return
 		}
 	}
-
-	// for {
-	// 	select {
-	// 	case msg := <-p.client.msgIn:
-	// 		log.Println(string(msg))
-	// 		return
-	// 	}
-	// }
 }

@@ -19,10 +19,10 @@ func NewChallenge(word, desc string) *Challenge {
 }
 
 var challenges = []*Challenge{
-	NewChallenge("tung", "most handsome guy in the world"),
-	NewChallenge("javascript", "write one bug everywhere"),
-	NewChallenge("go", "google language"),
-	NewChallenge("ruby", "something on the rail"),
+	NewChallenge("t", "most handsome guy in the world"),
+	// NewChallenge("javascript", "write one bug everywhere"),
+	NewChallenge("g", "google language"),
+	// NewChallenge("ruby", "something on the rail"),
 }
 
 type WonderWordGame struct {

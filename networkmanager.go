@@ -53,16 +53,12 @@ func (n *NetworkManager) Register(p *Player) {
 }
 
 func (n *NetworkManager) BoardcastGameState(state *GameState) {
-	type CurrentState struct {
-		Desc     string `json:"desc"`
-		Revealed string `json:"revealed"`
-	}
-
 	revealed := strings.Join(state.wonderWordGame.RevealedWord, "")
 
-	currentState := CurrentState{
-		Desc:     state.wonderWordGame.Challenge.Desc,
-		Revealed: revealed,
+	currentState := BoardCastGameStateEvent{
+		EventType: "boardcastgamestate",
+		Desc:      state.wonderWordGame.Challenge.Desc,
+		Revealed:  revealed,
 	}
 
 	currentStateJson, err := json.Marshal(currentState)
