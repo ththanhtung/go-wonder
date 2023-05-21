@@ -5,13 +5,15 @@ type GameState struct {
 	players     map[string]*Player
 	inProgress   bool
 	playerCount int
+	wonderWordGame *WonderWordGame
 }
 
-func NewGameState() *GameState {
+func NewGameState(wonderWordGame *WonderWordGame) *GameState {
 	return &GameState{
 		players:     make(map[string]*Player),
 		inProgress:   false,
 		playerCount: 0,
+		wonderWordGame: wonderWordGame,
 	}
 }
 
@@ -20,6 +22,7 @@ func (g *GameState) ReadyToStart() bool{
 }
 
 func (g *GameState) Start(){
+	g.wonderWordGame.Start()
 	g.inProgress = true
 }
 

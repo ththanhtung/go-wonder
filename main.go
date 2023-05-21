@@ -2,7 +2,8 @@ package main
 
 func main() {
 	transport := NewTransport()
-	state := NewGameState()
+	wonderWordGame := NewWonderWordGame()
+	state := NewGameState(wonderWordGame)
 	networkManager := NewNetworkManager(transport)
 	controller := NewController(networkManager, state)
 	transport.RegisterNewConnHandler(controller.RegisterPlayer)

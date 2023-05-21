@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -17,8 +19,8 @@ func NewNetworkManager(transport *Transport) *NetworkManager {
 	return &NetworkManager{
 		transport: transport,
 		broadcast: make(chan []byte, 100),
-		register: make(chan *Client),
-		Clients: map[*Client]bool{},
+		register:  make(chan *Client),
+		Clients:   map[*Client]bool{},
 	}
 }
 
@@ -46,8 +48,30 @@ func (n *NetworkManager) Run() {
 	}
 }
 
-func (n *NetworkManager) Register(p *Player){
+func (n *NetworkManager) Register(p *Player) {
 	n.register <- p.client
+}
+
+func (n *NetworkManager) BoardcastGameState(state *GameState) {
+	type CurrentState struct {
+		Desc     string `json:"desc"`
+		Revealed string `json:"revealed"`
+	}
+
+	revealed := strings.Join(state.wonderWordGame.RevealedWord, "")
+
+	currentState := CurrentState{
+		Desc:     state.wonderWordGame.Challenge.Desc,
+		Revealed: revealed,
+	}
+
+	currentStateJson, err := json.Marshal(currentState)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	log.Println(currentStateJson)
+	n.broadcast <- []byte(currentStateJson)
 }
 
 func (n *NetworkManager) ReadMsg(c *Client) {

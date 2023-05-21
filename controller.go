@@ -58,10 +58,13 @@ func (c *Controller) GameLoop() {
 			log.Println("It's your turn, player:", players[i].userID)
 			if players[i].MakeTurn() {
 				c.ProcessInput(players[i], players)
+				c.networkManager.BoardcastGameState(c.state)
 				i++
 			} else {
+				c.networkManager.BoardcastGameState(c.state)
 				i++
 			}
+
 		}
 	}
 
@@ -72,8 +75,12 @@ func (c *Controller) ProcessInput(p *Player, players []*Player) {
 		event := DecodeEvent(<-p.client.msgIn)
 		switch event.EventType {
 		case "guess":
+			p.guess = event.Payload
 			p.Update(players, c.state)
 			log.Println(event.Payload)
+			log.Println("word", c.state.wonderWordGame.Challenge.Desc)
+			log.Println("word", c.state.wonderWordGame.RevealedWord)
+			log.Println("score", p.score)
 			return
 		case "msg":
 			log.Println(event.Payload)
