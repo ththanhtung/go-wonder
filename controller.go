@@ -60,7 +60,6 @@ func (c *Controller) GameLoop() {
 			c.networkManager.BoardcastCurrentPlayerState(players[i])
 			if players[i].MakeTurn() {
 				c.ProcessInput(players[i], players)
-				log.Println("It's your turn, player 2:", players[i].userID)
 				c.networkManager.BoardcastGameState(c.state, players[i])
 				c.networkManager.BoardcastCurrentPlayerState(players[i])
 				if c.state.wonderWordGame.CheckIfWinning() {

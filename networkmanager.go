@@ -56,10 +56,11 @@ func (n *NetworkManager) BoardcastGameState(state *GameState, p *Player) {
 	revealed := strings.Join(state.wonderWordGame.RevealedWord, "")
 
 	currentState := BoardCastGameStateEvent{
-		EventType:     "boardcast_game_state",
-		Desc:          state.wonderWordGame.Challenge.Desc,
-		Revealed:      revealed,
-		CurrentPlayer: p.userID,
+		EventType:         "boardcast_game_state",
+		Desc:              state.wonderWordGame.Challenge.Desc,
+		Revealed:          revealed,
+		CurrentPlayerID:   p.userID,
+		CurrentPlayerName: p.username,
 	}
 
 	currentStateJson, err := json.Marshal(currentState)
@@ -69,6 +70,18 @@ func (n *NetworkManager) BoardcastGameState(state *GameState, p *Player) {
 	}
 	log.Println(currentStateJson)
 	n.broadcast <- []byte(currentStateJson)
+}
+
+func (n *NetworkManager) BoardcastMsg(senderName, senderId string, msg string) {
+	msgEvent := BoardcastMessageEvent{
+		EventType:  "boardcast_msg",
+		SenderName: senderName,
+		SenderId:   senderId,
+		Payload:    string(msg),
+	}
+
+	msgEventJson, _ := json.Marshal(msgEvent)
+	n.broadcast <- []byte(msgEventJson)
 }
 
 func (n *NetworkManager) SendToClient(c *Client, rawMsg []byte) {
@@ -101,9 +114,18 @@ func (n *NetworkManager) ReadMsg(c *Client) {
 			break
 		}
 
-		// log.Println("msg:", string(payload))
+		log.Println("msg:", string(payload))
 
-		c.msgIn <- payload
+		event := DecodeEvent(payload)
+
+		if event.EventType == "guess" {
+			log.Println("msg wonder:", event.Payload)
+			c.msgIn <- payload
+		}
+		if event.EventType == "msg" {
+			log.Println("msg:", event.Payload)
+			n.BoardcastMsg(event.SenderName, event.SenderId, event.Payload)
+		}
 	}
 }
 

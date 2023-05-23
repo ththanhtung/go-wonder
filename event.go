@@ -3,8 +3,10 @@ package main
 import "encoding/json"
 
 type Event struct {
-	EventType string `json:"type"`
-	Payload   string `json:"payload"`
+	EventType  string `json:"type"`
+	Payload    string `json:"payload"`
+	SenderName string `json:"senderName"`
+	SenderId   string `json:"senderId"`
 }
 
 func DecodeEvent(rawEvent []byte) *Event {
@@ -14,10 +16,11 @@ func DecodeEvent(rawEvent []byte) *Event {
 }
 
 type BoardCastGameStateEvent struct {
-	EventType     string `json:"type"`
-	Desc          string `json:"desc"`
-	Revealed      string `json:"revealed"`
-	CurrentPlayer string `json:"currentPlayer"`
+	EventType         string `json:"type"`
+	Desc              string `json:"desc"`
+	Revealed          string `json:"revealed"`
+	CurrentPlayerID   string `json:"userId"`
+	CurrentPlayerName string `json:"username"`
 }
 
 type WinningEvent struct {
@@ -31,4 +34,11 @@ type UpdatePlayerStateEvent struct {
 	UserId    string `json:"userId"`
 	Username  string `json:"username"`
 	Score     int    `json:"score"`
+}
+
+type BoardcastMessageEvent struct {
+	EventType  string `json:"type"`
+	Payload    string `json:"payload"`
+	SenderName string `json:"senderName"`
+	SenderId   string `json:"senderId"`
 }
