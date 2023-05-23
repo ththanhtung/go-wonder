@@ -37,13 +37,6 @@ func LoadData() []*Challenge {
 	return challenges
 }
 
-// var challenges = []*Challenge{
-// 	NewChallenge("tung", "most handsome guy in the world"),
-// 	NewChallenge("javascript", "write one bug everywhere"),
-// 	NewChallenge("go", "google language"),
-// 	NewChallenge("ruby", "something on the rail"),
-// }
-
 var challenges = LoadData()
 
 type WonderWordGame struct {
@@ -85,7 +78,7 @@ func (wg *WonderWordGame) ScoreCalculator(guessChar string) (int, string) {
 	return score, strings.Join(wg.RevealedWord, "")
 }
 
-func (wg *WonderWordGame) CheckIfWinning() bool {
+func (wg *WonderWordGame) CheckIfEndGame() bool {
 	revealed := strings.Join(wg.RevealedWord, "")
 	return revealed == wg.Challenge.Word
 }

@@ -62,11 +62,13 @@ func (c *Controller) GameLoop() {
 				c.ProcessInput(players[i], players)
 				c.networkManager.BoardcastGameState(c.state, players[i])
 				c.networkManager.BoardcastCurrentPlayerState(players[i])
-				if c.state.wonderWordGame.CheckIfWinning() {
+				if c.state.wonderWordGame.CheckIfEndGame() {
+					highestScoringPlayer := c.FindHighestScoringPlayer()
+
 					winner := WinningEvent{
 						EventType: "win",
-						Winner:    players[i].username,
-						Score:     players[i].score,
+						Winner:    highestScoringPlayer.username,
+						Score:     highestScoringPlayer.score,
 					}
 					WinningEventJson, _ := json.Marshal(winner)
 					c.networkManager.broadcast <- []byte(WinningEventJson)
@@ -82,6 +84,22 @@ func (c *Controller) GameLoop() {
 
 		}
 	}
+}
+
+func (c Controller) FindHighestScoringPlayer() *Player {
+	players := c.state.GetPlayers()
+
+	highestScoringPlayer := &Player{
+		score: 0,
+	}
+
+	for _, p := range players {
+		if p.score > highestScoringPlayer.score {
+			highestScoringPlayer = p
+		}
+	}
+
+	return highestScoringPlayer
 }
 
 func (c *Controller) ProcessInput(p *Player, players []*Player) {
