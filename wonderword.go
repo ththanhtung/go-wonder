@@ -1,14 +1,16 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"math/rand"
 	"strings"
 	"time"
 )
 
 type Challenge struct {
-	Word string
-	Desc string
+	Word string `json:"Word"`
+	Desc string `json:"Desc"`
 }
 
 func NewChallenge(word, desc string) *Challenge {
@@ -18,12 +20,31 @@ func NewChallenge(word, desc string) *Challenge {
 	}
 }
 
-var challenges = []*Challenge{
-	NewChallenge("tung", "most handsome guy in the world"),
-	NewChallenge("javascript", "write one bug everywhere"),
-	NewChallenge("go", "google language"),
-	NewChallenge("ruby", "something on the rail"),
+func LoadData() []*Challenge {
+	// Read the JSON file into a byte slice
+	var jsonData, err = ioutil.ReadFile("./words.json")
+	if err != nil {
+		panic(err)
+	}
+
+	// Unmarshal the JSON data into a slice of Challenge structs
+	var challenges []*Challenge
+	err = json.Unmarshal(jsonData, &challenges)
+	if err != nil {
+		panic(err)
+	}
+
+	return challenges
 }
+
+// var challenges = []*Challenge{
+// 	NewChallenge("tung", "most handsome guy in the world"),
+// 	NewChallenge("javascript", "write one bug everywhere"),
+// 	NewChallenge("go", "google language"),
+// 	NewChallenge("ruby", "something on the rail"),
+// }
+
+var challenges = LoadData()
 
 type WonderWordGame struct {
 	Challenge    *Challenge
@@ -34,8 +55,8 @@ func NewWonderWordGame() *WonderWordGame {
 	return &WonderWordGame{}
 }
 
-func (wg *WonderWordGame) Start(){
-	
+func (wg *WonderWordGame) Start() {
+
 	challenge := wg.GetRandomChallenge()
 
 	revealed := make([]string, len(challenge.Word))
@@ -64,7 +85,7 @@ func (wg *WonderWordGame) ScoreCalculator(guessChar string) (int, string) {
 	return score, strings.Join(wg.RevealedWord, "")
 }
 
-func (wg *WonderWordGame) CheckIfWinning()bool{
+func (wg *WonderWordGame) CheckIfWinning() bool {
 	revealed := strings.Join(wg.RevealedWord, "")
 	return revealed == wg.Challenge.Word
 }
