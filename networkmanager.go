@@ -52,13 +52,14 @@ func (n *NetworkManager) Register(p *Player) {
 	n.register <- p.client
 }
 
-func (n *NetworkManager) BoardcastGameState(state *GameState) {
+func (n *NetworkManager) BoardcastGameState(state *GameState, p *Player) {
 	revealed := strings.Join(state.wonderWordGame.RevealedWord, "")
 
 	currentState := BoardCastGameStateEvent{
-		EventType: "boardcastgamestate",
-		Desc:      state.wonderWordGame.Challenge.Desc,
-		Revealed:  revealed,
+		EventType:     "boardcast_game_state",
+		Desc:          state.wonderWordGame.Challenge.Desc,
+		Revealed:      revealed,
+		CurrentPlayer: p.userID,
 	}
 
 	currentStateJson, err := json.Marshal(currentState)
@@ -68,6 +69,21 @@ func (n *NetworkManager) BoardcastGameState(state *GameState) {
 	}
 	log.Println(currentStateJson)
 	n.broadcast <- []byte(currentStateJson)
+}
+
+func (n *NetworkManager) SendToClient(c *Client, rawMsg []byte) {
+	c.msgOut <- rawMsg
+}
+
+func (n *NetworkManager) BoardcastCurrentPlayerState(p *Player) {
+	updatePlayerState := UpdatePlayerStateEvent{
+		EventType: "update_player_state",
+		UserId:    p.userID,
+		Username:  p.username,
+		Score:     p.score,
+	}
+	updatePlayerStateJson, _ := json.Marshal(&updatePlayerState)
+	n.SendToClient(p.client, []byte(updatePlayerStateJson))
 }
 
 func (n *NetworkManager) ReadMsg(c *Client) {

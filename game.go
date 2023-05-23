@@ -10,7 +10,7 @@ type GameState struct {
 
 func NewGameState(wonderWordGame *WonderWordGame) *GameState {
 	return &GameState{
-		players:     make(map[string]*Player),
+		players:     make(map[string]*Player, 100),
 		inProgress:   false,
 		playerCount: 0,
 		wonderWordGame: wonderWordGame,

@@ -48,7 +48,6 @@ func (c *Controller) GameLoop() {
 
 	for range ticker.C {
 		players := c.state.GetPlayers()
-		log.Println("players:", players)
 
 		i := 0
 
@@ -57,9 +56,13 @@ func (c *Controller) GameLoop() {
 				i = 0
 			}
 			log.Println("It's your turn, player:", players[i].userID)
+			c.networkManager.BoardcastGameState(c.state, players[i])
+			c.networkManager.BoardcastCurrentPlayerState(players[i])
 			if players[i].MakeTurn() {
 				c.ProcessInput(players[i], players)
-				c.networkManager.BoardcastGameState(c.state)
+				log.Println("It's your turn, player 2:", players[i].userID)
+				c.networkManager.BoardcastGameState(c.state, players[i])
+				c.networkManager.BoardcastCurrentPlayerState(players[i])
 				if c.state.wonderWordGame.CheckIfWinning() {
 					winner := WinningEvent{
 						EventType: "win",
@@ -72,13 +75,14 @@ func (c *Controller) GameLoop() {
 				}
 				i++
 			} else {
-				c.networkManager.BoardcastGameState(c.state)
+				c.networkManager.BoardcastGameState(c.state, players[i])
+				c.networkManager.BoardcastCurrentPlayerState(players[i])
+				log.Println("It's your turn, player 2:", players[i].userID)
 				i++
 			}
 
 		}
 	}
-
 }
 
 func (c *Controller) ProcessInput(p *Player, players []*Player) {
