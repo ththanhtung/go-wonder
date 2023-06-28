@@ -1,4 +1,4 @@
-package main
+package game
 
 import (
 	"encoding/json"
@@ -7,14 +7,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"ww.com/events"
+	"ww.com/models"
 )
 
 type Controller struct {
 	networkManager *NetworkManager
-	state          *GameState
+	state          *models.GameState
 }
 
-func NewController(networkManager *NetworkManager, state *GameState) *Controller {
+func NewController(networkManager *NetworkManager, state *models.GameState) *Controller {
 	return &Controller{
 		networkManager: networkManager,
 		state:          state,
@@ -27,7 +29,7 @@ func (c *Controller) Init() {
 
 func (c *Controller) RegisterPlayer(conn *websocket.Conn) {
 	playerID := uuid.NewString()
-	player := NewPlayer(playerID, playerID, conn)
+	player := models.NewPlayer(playerID, playerID, conn)
 	playersNumber := c.state.AddPlayer(player)
 	log.Println("current players number:", playersNumber)
 	c.networkManager.Register(player)
@@ -55,30 +57,30 @@ func (c *Controller) GameLoop() {
 			if i > c.state.GetPlayersCount()-1 {
 				i = 0
 			}
-			log.Println("It's your turn, player:", players[i].userID)
+			log.Println("It's your turn, player:", players[i].UserID)
 			c.networkManager.BoardcastGameState(c.state, players[i])
 			c.networkManager.BoardcastCurrentPlayerState(players[i])
 			if players[i].MakeTurn() {
 				c.ProcessInput(players[i], players)
 				c.networkManager.BoardcastGameState(c.state, players[i])
 				c.networkManager.BoardcastCurrentPlayerState(players[i])
-				if c.state.wonderWordGame.CheckIfEndGame() {
+				if c.state.WonderWordGame.CheckIfEndGame() {
 					highestScoringPlayer := c.FindHighestScoringPlayer()
 
-					winner := WinningEvent{
+					winner := events.WinningEvent{
 						EventType: "win",
-						Winner:    highestScoringPlayer.username,
-						Score:     highestScoringPlayer.score,
+						Winner:    highestScoringPlayer.Username,
+						Score:     highestScoringPlayer.Score,
 					}
 					WinningEventJson, _ := json.Marshal(winner)
 					c.networkManager.broadcast <- []byte(WinningEventJson)
-					c.state.wonderWordGame.Start()
+					c.state.WonderWordGame.Start()
 				}
 				i++
 			} else {
 				c.networkManager.BoardcastGameState(c.state, players[i])
 				c.networkManager.BoardcastCurrentPlayerState(players[i])
-				log.Println("It's your turn, player 2:", players[i].userID)
+				log.Println("It's your turn, player 2:", players[i].UserID)
 				i++
 			}
 
@@ -86,15 +88,15 @@ func (c *Controller) GameLoop() {
 	}
 }
 
-func (c Controller) FindHighestScoringPlayer() *Player {
+func (c Controller) FindHighestScoringPlayer() *models.Player {
 	players := c.state.GetPlayers()
 
-	highestScoringPlayer := &Player{
-		score: 0,
+	highestScoringPlayer := &models.Player{
+		Score: 0,
 	}
 
 	for _, p := range players {
-		if p.score > highestScoringPlayer.score {
+		if p.Score > highestScoringPlayer.Score {
 			highestScoringPlayer = p
 		}
 	}
@@ -102,17 +104,17 @@ func (c Controller) FindHighestScoringPlayer() *Player {
 	return highestScoringPlayer
 }
 
-func (c *Controller) ProcessInput(p *Player, players []*Player) {
+func (c *Controller) ProcessInput(p *models.Player, players []*models.Player) {
 	for {
-		event := DecodeEvent(<-p.client.msgIn)
+		event := events.DecodeEvent(<-p.Client.MsgIn)
 		switch event.EventType {
 		case "guess":
-			p.guess = event.Payload
+			p.Guess = event.Payload
 			p.Update(players, c.state)
 			log.Println(event.Payload)
-			log.Println("word", c.state.wonderWordGame.Challenge.Desc)
-			log.Println("word", c.state.wonderWordGame.RevealedWord)
-			log.Println("score", p.score)
+			log.Println("word", c.state.WonderWordGame.Challenge.Desc)
+			log.Println("word", c.state.WonderWordGame.RevealedWord)
+			log.Println("score", p.Score)
 			return
 		case "msg":
 			log.Println(event.Payload)

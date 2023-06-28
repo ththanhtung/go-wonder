@@ -1,4 +1,4 @@
-package main
+package game
 
 import (
 	"encoding/json"
@@ -6,21 +6,24 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"ww.com/events"
+	"ww.com/models"
+	"ww.com/transport"
 )
 
 type NetworkManager struct {
-	transport *Transport
+	transport *transport.Transport
 	broadcast chan []byte
-	register  chan *Client
-	Clients   map[*Client]bool
+	register  chan *models.Client
+	Clients   map[*models.Client]bool
 }
 
-func NewNetworkManager(transport *Transport) *NetworkManager {
+func NewNetworkManager(transport *transport.Transport) *NetworkManager {
 	return &NetworkManager{
 		transport: transport,
 		broadcast: make(chan []byte, 100),
-		register:  make(chan *Client),
-		Clients:   map[*Client]bool{},
+		register:  make(chan *models.Client),
+		Clients:   map[*models.Client]bool{},
 	}
 }
 
@@ -41,26 +44,26 @@ func (n *NetworkManager) Run() {
 		case msg := <-n.broadcast:
 			for client := range n.Clients {
 				select {
-				case client.msgOut <- msg:
+				case client.MsgOut <- msg:
 				}
 			}
 		}
 	}
 }
 
-func (n *NetworkManager) Register(p *Player) {
-	n.register <- p.client
+func (n *NetworkManager) Register(p *models.Player) {
+	n.register <- p.Client
 }
 
-func (n *NetworkManager) BoardcastGameState(state *GameState, p *Player) {
-	revealed := strings.Join(state.wonderWordGame.RevealedWord, "")
+func (n *NetworkManager) BoardcastGameState(state *models.GameState, p *models.Player) {
+	revealed := strings.Join(state.WonderWordGame.RevealedWord, "")
 
-	currentState := BoardCastGameStateEvent{
+	currentState := events.BoardCastGameStateEvent{
 		EventType:         "boardcast_game_state",
-		Desc:              state.wonderWordGame.Challenge.Desc,
+		Desc:              state.WonderWordGame.Challenge.Desc,
 		Revealed:          revealed,
-		CurrentPlayerID:   p.userID,
-		CurrentPlayerName: p.username,
+		CurrentPlayerID:   p.UserID,
+		CurrentPlayerName: p.Username,
 	}
 
 	currentStateJson, err := json.Marshal(currentState)
@@ -73,7 +76,7 @@ func (n *NetworkManager) BoardcastGameState(state *GameState, p *Player) {
 }
 
 func (n *NetworkManager) BoardcastMsg(senderName, senderId string, msg string) {
-	msgEvent := BoardcastMessageEvent{
+	msgEvent := events.BoardcastMessageEvent{
 		EventType:  "boardcast_msg",
 		SenderName: senderName,
 		SenderId:   senderId,
@@ -84,29 +87,29 @@ func (n *NetworkManager) BoardcastMsg(senderName, senderId string, msg string) {
 	n.broadcast <- []byte(msgEventJson)
 }
 
-func (n *NetworkManager) SendToClient(c *Client, rawMsg []byte) {
-	c.msgOut <- rawMsg
+func (n *NetworkManager) SendToClient(c *models.Client, rawMsg []byte) {
+	c.MsgOut <- rawMsg
 }
 
-func (n *NetworkManager) BoardcastCurrentPlayerState(p *Player) {
-	updatePlayerState := UpdatePlayerStateEvent{
+func (n *NetworkManager) BoardcastCurrentPlayerState(p *models.Player) {
+	updatePlayerState := events.UpdatePlayerStateEvent{
 		EventType: "update_player_state",
-		UserId:    p.userID,
-		Username:  p.username,
-		Score:     p.score,
+		UserId:    p.UserID,
+		Username:  p.Username,
+		Score:     p.Score,
 	}
 	updatePlayerStateJson, _ := json.Marshal(&updatePlayerState)
-	n.SendToClient(p.client, []byte(updatePlayerStateJson))
+	n.SendToClient(p.Client, []byte(updatePlayerStateJson))
 }
 
-func (n *NetworkManager) ReadMsg(c *Client) {
+func (n *NetworkManager) ReadMsg(c *models.Client) {
 	log.Println("client reading msg")
 	defer func() {
-		c.conn.Close()
+		c.Conn.Close()
 	}()
 
 	for {
-		_, payload, err := c.conn.ReadMessage()
+		_, payload, err := c.Conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Println("error reading message:", err.Error())
@@ -116,11 +119,11 @@ func (n *NetworkManager) ReadMsg(c *Client) {
 
 		log.Println("msg:", string(payload))
 
-		event := DecodeEvent(payload)
+		event := events.DecodeEvent(payload)
 
 		if event.EventType == "guess" {
 			log.Println("msg wonder:", event.Payload)
-			c.msgIn <- payload
+			c.MsgIn <- payload
 		}
 		if event.EventType == "msg" {
 			log.Println("msg:", event.Payload)
@@ -129,20 +132,20 @@ func (n *NetworkManager) ReadMsg(c *Client) {
 	}
 }
 
-func (n *NetworkManager) WriteMsg(c *Client) {
+func (n *NetworkManager) WriteMsg(c *models.Client) {
 	defer func() {
-		c.conn.Close()
+		c.Conn.Close()
 	}()
 
 	for {
 		select {
-		case msg, ok := <-c.msgOut:
+		case msg, ok := <-c.MsgOut:
 			if !ok {
-				if err := c.conn.WriteMessage(websocket.CloseMessage, nil); err != nil {
+				if err := c.Conn.WriteMessage(websocket.CloseMessage, nil); err != nil {
 					log.Fatal("error sending message", err.Error())
 				}
 			}
-			if err := c.conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+			if err := c.Conn.WriteMessage(websocket.TextMessage, msg); err != nil {
 				log.Fatal("error sending message", err.Error())
 			}
 			log.Println("message sent")

@@ -1,14 +1,20 @@
 [
   {
-    "Word": "hello",
-    "Desc": "A greeting used when meeting or answering the telephone."
+    "Word": "none",
+    "Desc": "How many developers does it take to change a light bulb?"
   },
   {
-    "Word": "world",
-    "Desc": "The earth, together with all of its countries and peoples."
+    "Word": "pushing",
+    "Desc": "What's a developer's favorite exercise?"
   },
   {
-    "Word": "computer",
-    "Desc": "An electronic device that can store and process large amounts of information and perform complex calculations."
+    "Word": "tung",
+    "Desc": "most handsome guy in the world"
+  }, {
+    "Word": "go",
+    "Desc": "programming language that created by google"
+  }, {
+    "Word": "bug",
+    "Desc": "java is famous for write once *** anywhere"
   }
 ]

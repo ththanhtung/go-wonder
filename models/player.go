@@ -1,4 +1,4 @@
-package main
+package models
 
 import (
 	"time"
@@ -7,26 +7,26 @@ import (
 )
 
 type Player struct {
-	userID   string
-	username string
-	client   *Client
-	score    int
-	guess    string
+	UserID   string
+	Username string
+	Client   *Client
+	Score    int
+	Guess    string
 }
 
 func NewPlayer(id, name string, conn *websocket.Conn) *Player {
 	return &Player{
-		userID:   id,
-		username: name,
-		client:   NewClient(conn),
-		score:    0,
-		guess:    "",
+		UserID:   id,
+		Username: name,
+		Client:   NewClient(conn),
+		Score:    0,
+		Guess:    "",
 	}
 }
 
 func (p *Player) Update(players []*Player, state *GameState) {
-	scoreForOneGuess, _ := state.wonderWordGame.ScoreCalculator(p.guess)
-	p.score += scoreForOneGuess
+	scoreForOneGuess, _ := state.WonderWordGame.ScoreCalculator(p.Guess)
+	p.Score += scoreForOneGuess
 }
 
 func (p *Player) MakeTurn() bool {
@@ -35,7 +35,7 @@ func (p *Player) MakeTurn() bool {
 	select {
 	case <-timer.C:
 		return false
-	case <-p.client.msgIn:
+	case <-p.Client.MsgIn:
 		return true
 	}
 }
